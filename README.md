@@ -1,1 +1,0 @@
-# Photo-Renamer-Tool-Pro

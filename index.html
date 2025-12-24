@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master V12 Elite - Pro Edition</title>
+    
+    <!-- Premium Font (Plus Jakarta Sans) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        :root { 
+            --brand: #4f46e5; 
+            --brand-hover: #4338ca;
+            --brand-light: #f5f3ff;
+            --emerald: #10b981;
+            --rose: #f43f5e;
+            --slate: #334155;
+            --nav-h: 70px;
+        }
+
+        body { 
+            background: #f8fafc;
+            background-image: radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.05) 0px, transparent 50%);
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: #1e293b;
+            font-size: 15px; /* Larger base font */
+            margin: 0;
+        }
+
+        /* --- STICKY NAVIGATION --- */
+        .main-nav { 
+            height: var(--nav-h);
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky; top: 0; z-index: 2000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .sticky-dashboard { 
+            position: sticky; 
+            top: var(--nav-h); 
+            z-index: 1900; 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 40px;
+            border-bottom: 2px solid var(--brand);
+            box-shadow: 0 10px 15px -10px rgba(0,0,0,0.05);
+        }
+
+        /* --- CARDS & SETUP --- */
+        .setup-card { 
+            background: white; border-radius: 20px; border: 1px solid #e2e8f0;
+            padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); margin: 25px;
+        }
+
+        .logo { font-weight: 800; font-size: 1.6rem; color: var(--brand); text-decoration: none; letter-spacing: -1px; }
+
+        /* Status Tabs Styling */
+        .filter-pills { display: flex; gap: 10px; background: #f1f5f9; padding: 6px; border-radius: 14px; }
+        .tab-btn { 
+            border: none; padding: 8px 20px; border-radius: 10px; font-size: 14px; font-weight: 700;
+            transition: all 0.3s ease; color: var(--slate); background: transparent;
+        }
+        .tab-btn.active[data-filter="all"] { background: white; color: var(--brand); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .tab-btn.active[data-filter="linked"] { background: var(--emerald); color: white; }
+        .tab-btn.active[data-filter="missing"] { background: var(--rose); color: white; }
+
+        /* --- TABLE STYLE --- */
+        .table-wrap { 
+            background: white; border-radius: 0 0 20px 20px;
+            overflow: auto; height: calc(100vh - 250px);
+            border: 1px solid #e2e8f0; border-top: none;
+        }
+
+        #mainTable thead th { 
+            position: sticky; top: 0; z-index: 100;
+            background: #f8fafc !important; color: #475569 !important;
+            font-weight: 800; font-size: 13px; text-transform: uppercase;
+            padding: 16px !important; border-bottom: 2px solid #e2e8f0 !important;
+        }
+        .f-row { position: sticky; top: 50px; z-index: 99; background: #fff; }
+
+        .img-t { 
+            width: 50px; height: 50px; object-fit: cover; border-radius: 12px; 
+            border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .img-t:hover { transform: scale(1.3) rotate(3deg); border-color: var(--brand); cursor: pointer; }
+
+        /* Tag UI */
+        .tag-box { 
+            background: #f8fafc; padding: 15px; border-radius: 16px; 
+            min-height: 60px; display: flex; flex-wrap: wrap; gap: 10px; border: 1px inset #e2e8f0;
+        }
+        .col-tag { 
+            cursor: pointer; padding: 8px 18px; border-radius: 10px; 
+            border: 1px solid #cbd5e1; font-size: 13px; font-weight: 700; 
+            background: white; transition: 0.2s;
+        }
+        .match-active { border-color: #f59e0b; background: #fffbeb; color: #b45309; }
+        .name-active { border-color: var(--brand); background: var(--brand-light); color: var(--brand); }
+
+        /* Buttons */
+        .btn-elite { 
+            border-radius: 12px; font-weight: 700; font-size: 14px; 
+            padding: 10px 24px; border: none; transition: 0.3s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .btn-primary-elite { background: var(--brand); color: white; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2); }
+        .btn-primary-elite:hover { background: var(--brand-hover); transform: translateY(-2px); color: white; }
+
+        /* Inputs */
+        .form-control, .form-select {
+            font-size: 15px; padding: 12px; border-radius: 12px; border: 1.5px solid #e2e8f0;
+        }
+        .form-control:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+
+        /* Loader */
+        #loader { 
+            display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); 
+            z-index: 9999; flex-direction: column; align-items: center; justify-content: center; 
+        }
+
+        @media (max-width: 768px) {
+            .main-nav { padding: 0 20px; }
+            .btn-text { display: none; }
+            .sticky-dashboard { flex-direction: column; gap: 15px; padding: 15px; }
+            .search-container { width: 100% !important; order: 1; }
+            .filter-container { width: 100%; justify-content: space-between; order: 2; display: flex; }
+        }
+
+        /* High contrast search bar */
+        .search-bar { border-radius: 12px !important; border: 2px solid #e2e8f0 !important; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h5 class="mt-4 fw-bold">Generating Identity Records...</h5>
+</div>
+
+<!-- Elite Header -->
+<nav class="main-nav">
+    <a href="#" class="logo"><i class="fa-solid fa-graduation-cap me-2"></i>MASTER <span style="color:#94a3b8">V12</span></a>
+    
+    <div id="actionArea" style="display:none;" class="d-flex gap-2">
+        <button onclick="exportExcel()" class="btn btn-light border btn-elite text-dark"><i class="fa-solid fa-file-excel text-success"></i> <span class="btn-text">Excel</span></button>
+        <button onclick="downloadZIP()" class="btn btn-primary-elite btn-elite"><i class="fa-solid fa-cloud-arrow-down"></i> <span class="btn-text">Download ZIP</span></button>
+    </div>
+</nav>
+
+<div class="container-fluid p-0">
+    <!-- Configuration -->
+    <div id="setupBox" class="setup-card">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label class="fw-bold mb-2 text-uppercase small text-muted">1. Import Excel Data</label>
+                <input type="file" id="excelIn" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="fw-bold mb-2 text-uppercase small text-muted">2. Select Student Photos</label>
+                <input type="file" id="photoIn" class="form-control" multiple>
+            </div>
+            
+            <div class="col-12 mt-4 pt-4 border-top" id="configSection" style="display:none;">
+                <div class="row g-4">
+                    <div class="col-md-5">
+                        <label class="fw-bold mb-2 text-warning"><i class="fa-solid fa-fingerprint me-2"></i>Match ID Column</label>
+                        <div id="mTags" class="tag-box"></div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="fw-bold mb-2 text-primary"><i class="fa-solid fa-i-cursor me-2"></i>New Name Pattern</label>
+                        <div id="nTags" class="tag-box"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="fw-bold mb-2">Separator</label>
+                        <select id="sep" class="form-select fw-bold">
+                            <option value="_">Underscore ( _ )</option>
+                            <option value="-">Hyphen ( - )</option>
+                            <option value=" ">Space ( )</option>
+                            <option value="|">Pipe ( | )</option>
+                            <option value=".">Dot ( . )</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="text-center mt-5">
+                    <button onclick="startMatching()" id="goBtn" class="btn btn-primary-elite btn-lg px-5 py-3 shadow-lg" disabled>
+                        PROCESS MASTER DATABASE <i class="fa-solid fa-rocket ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" style="display:none;">
+        <div class="sticky-dashboard d-flex align-items-center justify-content-between">
+            <!-- Filter Tabs -->
+            <div class="filter-container">
+                <div class="filter-pills">
+                    <button class="tab-btn active" data-filter="all" onclick="setFilter('all')">All (<span id="countAll">0</span>)</button>
+                    <button class="tab-btn" data-filter="linked" onclick="setFilter('linked')">Linked (<span id="countLinked">0</span>)</button>
+                    <button class="tab-btn" data-filter="missing" onclick="setFilter('missing')">Missing (<span id="countMissing">0</span>)</button>
+                </div>
+            </div>
+            
+            <!-- Global Search & Select All -->
+            <div class="search-container d-flex align-items-center gap-3" style="width: 45%;">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-search"></i></span>
+                    <input type="text" id="gSearch" class="form-control border-start-0 search-bar" placeholder="Search across all columns...">
+                </div>
+                <div class="form-check form-switch mb-0" style="min-width: 120px;">
+                    <input class="form-check-input" type="checkbox" id="selectAllMaster" onclick="batchToggle(this)">
+                    <label class="form-check-label small fw-bold text-muted" for="selectAllMaster">Select All</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table id="mainTable" class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr id="hRow">
+                        <th width="50"><input type="checkbox" id="pcSelectAll" onclick="batchToggle(this)"></th>
+                        <th>Status</th>
+                        <th>Preview</th>
+                    </tr>
+                    <tr class="f-row" id="fRow">
+                        <td></td><td></td><td></td>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="profileModal" onclick="this.style.display='none'" style="display:none; position: fixed; inset:0; background:rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); z-index:5000; align-items:center; justify-content:center; padding:20px;">
+    <div class="bg-white rounded-5 shadow-2xl overflow-hidden d-flex flex-wrap" onclick="event.stopPropagation()" style="max-width: 950px; width:100%; max-height: 85vh;">
+        <div style="flex:1; min-width: 350px; background:#000; display:flex; align-items:center; justify-content:center;">
+            <img id="modImg" src="" style="max-width:100%; max-height:500px; object-fit: contain;">
+        </div>
+        <div style="flex:1; min-width: 350px; padding:45px; overflow-y:auto; background: #fff;">
+            <div class="mb-4">
+                <h2 class="fw-800 text-primary mb-1">Student Identity</h2>
+                <p class="text-muted small">Verification details from Excel record</p>
+            </div>
+            <div id="modGrid" class="row g-3"></div>
+            <button id="modalDownloadBtn" class="btn btn-primary-elite w-100 mt-5 py-3 rounded-4 fw-bold shadow">
+                DOWNLOAD IDENTITY IMAGE
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let raw = [], photoMap = {}, mCols = [], nCols = [], processed = [], searchableIdx = [];
+    let currentStatusFilter = 'all';
+
+    // File Input Handlers
+    document.getElementById('excelIn').addEventListener('change', async (e) => {
+        const f = e.target.files[0];
+        const d = await f.arrayBuffer();
+        const wb = XLSX.read(d, {type: 'array'});
+        raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        const h = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1})[0];
+        initTags(h);
+    });
+
+    document.getElementById('photoIn').addEventListener('change', (e) => {
+        photoMap = {};
+        Array.from(e.target.files).forEach(file => {
+            const base = file.name.split('.').slice(0, -1).join('.').toLowerCase().trim();
+            photoMap[base] = file;
+        });
+    });
+
+    function initTags(headers) {
+        const mb = document.getElementById('mTags'), nb = document.getElementById('nTags');
+        mb.innerHTML = ""; nb.innerHTML = "";
+        mCols = []; nCols = [];
+        headers.forEach(h => {
+            if(!h) return;
+            const mt = document.createElement('div');
+            mt.className = "col-tag"; mt.innerText = h;
+            mt.onclick = () => {
+                if(mCols.includes(h)) { mCols = mCols.filter(x=>x!==h); mt.classList.remove('match-active'); }
+                else { mCols.push(h); mt.classList.add('match-active'); }
+                checkBtns();
+            };
+            mb.appendChild(mt);
+
+            const nt = document.createElement('div');
+            nt.className = "col-tag"; nt.innerText = h;
+            nt.onclick = () => {
+                if(nCols.includes(h)) {
+                    nCols = nCols.filter(x=>x!==h); nt.classList.remove('name-active'); nt.innerText = h;
+                } else {
+                    nCols.push(h); nt.classList.add('name-active');
+                    nt.innerHTML = `${h} <span class="badge bg-primary ms-1" style="font-size:10px;">${nCols.length}</span>`;
+                }
+                checkBtns();
+            };
+            nb.appendChild(nt);
+        });
+        document.getElementById('configSection').style.display = "block";
+    }
+
+    function checkBtns() {
+        document.getElementById('goBtn').disabled = !(mCols.length && nCols.length);
+    }
+
+    function startMatching() {
+        document.getElementById('loader').style.display = "flex";
+        setTimeout(runEngine, 800);
+    }
+
+    function runEngine() {
+        processed = []; searchableIdx = [];
+        let fc = 0, mc = 0;
+        const separator = document.getElementById('sep').value;
+
+        for (let row of raw) {
+            let matched = null, via = "None";
+            for (let c of mCols) {
+                let id = String(row[c] || "").toLowerCase().trim().replace(".0", "");
+                if (photoMap[id]) { matched = photoMap[id]; via = c; break; }
+            }
+
+            let item = {...row, _f: matched, _h: !!matched, _v: via};
+            let ext = matched ? matched.name.split('.').pop() : "jpg";
+            item._newName = nCols.map(c => String(row[c] || "NA").trim()).join(separator) + "." + ext;
+
+            if(item._h) fc++; else mc++;
+            processed.push(item);
+            searchableIdx.push(Object.values(row).join(" ").toLowerCase());
+        }
+        renderUI(fc, mc);
+    }
+
+    function renderUI(fc, mc) {
+        document.getElementById('loader').style.display = "none";
+        document.getElementById('setupBox').style.display = "none";
+        document.getElementById('dashboard').style.display = "block";
+        document.getElementById('actionArea').style.display = "flex";
+        
+        document.getElementById('countAll').innerText = processed.length;
+        document.getElementById('countLinked').innerText = fc;
+        document.getElementById('countMissing').innerText = mc;
+
+        const hRow = document.getElementById('hRow');
+        const fRow = document.getElementById('fRow');
+        const body = document.getElementById('tableBody');
+        const keys = Object.keys(raw[0]);
+
+        hRow.innerHTML = `<th><input type="checkbox" id="pcSelectAll" onclick="batchToggle(this)"></th><th>Status</th><th>Preview</th>`;
+        fRow.innerHTML = `<td></td><td></td><td></td>`;
+        keys.forEach((k, i) => {
+            hRow.innerHTML += `<th>${k}</th>`;
+            fRow.innerHTML += `<td><input type="text" class="form-control form-control-sm border-1" style="font-size:12px; height:30px;" data-col="${i}" onkeyup="searchHandler()" placeholder="Filter"></td>`;
+        });
+        hRow.innerHTML += `<th class="text-primary">Final Name</th>`;
+        
+        body.innerHTML = "";
+        processed.forEach((item, i) => {
+            let img = item._h ? `<img class="img-t" src="${URL.createObjectURL(item._f)}" onclick="viewProf(${i})">` : `<div class="img-t bg-light d-flex align-items-center justify-content-center text-muted" style="font-size:10px">NO PIC</div>`;
+            let badge = item._h ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-2">LINKED</span>` : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">MISSING</span>`;
+
+            let tr = document.createElement('tr'); 
+            tr.className = "row-item";
+            tr.dataset.status = item._h ? 'linked' : 'missing';
+            
+            let rowHtml = `<td><input type="checkbox" class="cb" value="${i}"></td><td>${badge}</td><td>${img}</td>`;
+            keys.forEach(k => rowHtml += `<td>${item[k] || '-'}</td>`);
+            rowHtml += `<td class="fw-bold text-primary" style="font-size:13px;">${item._newName}</td>`;
+            tr.innerHTML = rowHtml; body.appendChild(tr);
+        });
+        document.getElementById('gSearch').addEventListener('keyup', searchHandler);
+    }
+
+    function setFilter(type) {
+        currentStatusFilter = type;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-filter="${type}"]`).classList.add('active');
+        searchHandler();
+    }
+
+    function searchHandler() {
+        const globalQ = document.getElementById('gSearch').value.toLowerCase();
+        const fInputs = document.querySelectorAll('.f-row input');
+        const rows = document.querySelectorAll('.row-item');
+        const keys = Object.keys(raw[0]);
+
+        rows.forEach((row, i) => {
+            let isVisible = true;
+            if(currentStatusFilter !== 'all' && row.dataset.status !== currentStatusFilter) isVisible = false;
+            if(isVisible && !searchableIdx[i].includes(globalQ)) isVisible = false;
+            if(isVisible) {
+                fInputs.forEach(inp => {
+                    const v = inp.value.toLowerCase();
+                    if(v && !String(processed[i][keys[inp.dataset.col]]).toLowerCase().includes(v)) isVisible = false;
+                });
+            }
+            row.style.display = isVisible ? "" : "none";
+        });
+    }
+
+    function batchToggle(master) {
+        document.getElementById('selectAllMaster').checked = master.checked;
+        const pcM = document.getElementById('pcSelectAll');
+        if(pcM) pcM.checked = master.checked;
+        document.querySelectorAll('.cb').forEach(c => {
+            if(c.closest('.row-item').style.display !== 'none') c.checked = master.checked;
+        });
+    }
+
+    function viewProf(idx) {
+        const item = processed[idx];
+        document.getElementById('modImg').src = item._h ? URL.createObjectURL(item._f) : "";
+        let html = "";
+        Object.keys(raw[0]).forEach(k => html += `<div class="col-6 mb-2"><label class="text-muted d-block small fw-bold text-uppercase">${k}</label><span class="text-dark fw-bold">${item[k]}</span></div>`);
+        document.getElementById('modGrid').innerHTML = html;
+        document.getElementById('modalDownloadBtn').onclick = () => saveAs(item._f, item._newName);
+        document.getElementById('profileModal').style.display = "flex";
+    }
+
+    async function downloadZIP() {
+        const zip = new JSZip();
+        const checks = document.querySelectorAll('.cb:checked');
+        if(!checks.length) return alert("Please select records first!");
+        
+        document.getElementById('loader').style.display = "flex";
+        for(let c of checks) {
+            const item = processed[c.value];
+            if(item._h) zip.file(item._newName, item._f);
+        }
+        const b = await zip.generateAsync({type:"blob"});
+        saveAs(b, `Elite_Master_Export_${Date.now()}.zip`);
+        document.getElementById('loader').style.display = "none";
+    }
+
+    function exportExcel() {
+        const exportData = processed.map(d => {
+            let o = {...d}; delete o._f; delete o._h; delete o._v; delete o._newName;
+            o['Final_Filename'] = d._newName; return o;
+        });
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "MasterData");
+        XLSX.writeFile(wb, "Master_Report_V12.xlsx");
+    }
+</script>
+</body>
+</html>
